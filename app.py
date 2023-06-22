@@ -10,6 +10,7 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 import os
+import streamlit as st
 from PyPDF2 import PdfReader
 import textwrap
 
@@ -22,20 +23,36 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 
-def get_response_from_query(db, query, k=4):
-    """
-    gpt-3.5-turbo can handle up to 4097 tokens. Setting the chunksize to 1000 and k to 4 maximizes
-    the number of tokens to analyze.
-    """
+def main():
+    load_dotenv()
+    st.set_page_config(page_title="Ask your PDF")
+    st.header("Ask your PDF 💬")
+    # upload file
+    pdf = st.file_uploader("Upload your PDF", type="pdf")
+    if pdf is not None:
+        transcript = PdfReader(pdf)
+        text = ""
+        for page in transcript.pages:
+            text += page.extract_text()
 
-    docs = db.similarity_search(query, k=k)
-    docs_page_content = " ".join([d.page_content for d in docs])
-
-    chat = ChatOpenAI(model_name="gpt-3.5-turbo-16k", temperature=0.2)
-
-    # Template to use for the system message prompt
-    template = """
-        You are a helpful assistant that that can answer questions about youtube videos 
+        # split into chunks
+        text_splitter = CharacterTextSplitter(
+            separator="\n",
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len
+        )
+        chunks = text_splitter.split_text(text)
+        db = FAISS.from_texts(chunks, embeddings)
+        # show user input
+        query = st.text_input("Ask a question about your PDF:")
+        if query:
+            docs = db.similarity_search(query)
+            docs_page_content = " ".join([d.page_content for d in docs])
+            chat = ChatOpenAI(model_name="gpt-3.5-turbo-16k", temperature=0.2)
+            # Template to use for the system message prompt
+            template = """
+        You are a helpful assistant that that can answer questions about healthcare
         based on the patient interviews transcript: {docs}
         
         Only use the factual information from the transcript to answer the question.
@@ -44,46 +61,18 @@ def get_response_from_query(db, query, k=4):
         
         Your answers should be verbose and detailed.
         """
-
-    system_message_prompt = SystemMessagePromptTemplate.from_template(template)
-
-    # Human question prompt
-    human_template = "Answer the following question: {question}"
-    human_message_prompt = HumanMessagePromptTemplate.from_template(
-        human_template)
-
-    chat_prompt = ChatPromptTemplate.from_messages(
-        [system_message_prompt, human_message_prompt]
-    )
-
-    chain = LLMChain(llm=chat, prompt=chat_prompt)
-
-    response = chain.run(question=query, docs=docs_page_content)
-    response = response.replace("\n", "")
-    return response, docs
+        system_message_prompt = SystemMessagePromptTemplate.from_template(
+            template)
+        human_template = "Answer the following question: {question}"
+        human_message_prompt = HumanMessagePromptTemplate.from_template(
+            human_template)
+        chat_prompt = ChatPromptTemplate.from_messages(
+            [system_message_prompt, human_message_prompt])
+        chain = LLMChain(llm=chat, prompt=chat_prompt)
+        response = chain.run(question=query, docs=docs_page_content)
+        response = response.replace("\n", "")
+        st.write(response)
 
 
-# Example usage:
-#video_url = "https://www.youtube.com/watch?v=L_Guz73e6fw"
-#db = text_reader()
-
-
-transcript = PdfReader(
-    '/Users/siddharthkrishna/Downloads/patient 2 (14 files merged).pdf')
-#transcript = loader.load()
-raw_text = ''
-for i, page in enumerate(transcript.pages):
-    text = page.extract_text()
-    if text:
-        raw_text += text
-
-text_splitter = CharacterTextSplitter(
-    chunk_size=1000, chunk_overlap=200)
-docs = text_splitter.split_text(raw_text)
-
-db = FAISS.from_texts(docs, embeddings)
-
-
-query = "What is patient 3's main complaint?"
-response, docs = get_response_from_query(db, query)
-print(textwrap.fill(response, width=50))
+if __name__ == '__main__':
+    main()
