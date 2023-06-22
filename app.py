@@ -11,6 +11,7 @@ from langchain.prompts.chat import (
 )
 import os
 import streamlit as st
+import PyPDF2
 from PyPDF2 import PdfReader
 import textwrap
 
