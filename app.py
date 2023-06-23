@@ -1,4 +1,5 @@
-from PyPDF2 import PdfReader
+import PyPDF2 
+import PdfReader
 import streamlit as st
 import os
 from langchain.prompts.chat import (
