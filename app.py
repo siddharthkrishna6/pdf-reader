@@ -23,7 +23,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # PDF URL - training data
-github_file_url = 'https://raw.githubusercontent.com/siddharthkrishna6/pdf-reader/blob/main/patient%202%20(14%20files%20merged).pdf'
+github_file_url = 'https://raw.githubusercontent.com/siddharthkrishna6/pdf-reader/main/patient%202%20(14%20files%20merged).pdf'
 
 
 # defining the prompt
