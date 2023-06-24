@@ -10,13 +10,10 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-from io import BytesIO
+from PyPDF2 import PdfFileReader
 import requests
 import streamlit as st
 import os
-from pdfminer.converter import TextConverter
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.pdfpage import PDFPage
 
 
 OPENAI_API_KEY = "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"
@@ -26,7 +23,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # PDF URL - training data
-pdf_url = 'https://example.com/path/to/pdf.pdf'
+google_drive_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing'
 
 
 # defining the prompt
@@ -42,17 +39,14 @@ Your answers should be verbose and detailed.
 """
 
 
-def extract_text_from_pdf(pdf_bytes):
-    resource_manager = PDFResourceManager()
-    text_stream = BytesIO()
-    laparams = LAParams()
+def download_file_from_google_drive(url, destination):
+    file_id = url.split("/")[-2]
+    base_url = "https://drive.google.com/uc?export=download&id="
+    download_url = base_url + file_id
 
-    with TextConverter(resource_manager, text_stream, laparams=laparams) as device:
-        interpreter = PDFPageInterpreter(resource_manager, device)
-        for page in PDFPage.get_pages(pdf_bytes):
-            interpreter.process_page(page)
-
-    return text_stream.getvalue().decode()
+    response = requests.get(download_url)
+    with open(destination, "wb") as f:
+        f.write(response.content)
 
 
 def main():
@@ -61,12 +55,18 @@ def main():
     st.header("IBS Interpreter will provide answers from patient interviews 💬")
     query = st.text_input("Ask a question about the patients:")
 
-    # Download the PDF from the web
-    response = requests.get(pdf_url)
-    pdf_bytes = BytesIO(response.content)
+    # Download the PDF from Google Drive
+    download_file_from_google_drive(google_drive_url, "temp_pdf.pdf")
 
     # Read the downloaded PDF
-    text = extract_text_from_pdf(pdf_bytes)
+    try:
+        transcript = PdfFileReader("temp_pdf.pdf")
+        text = ""
+        for page in range(transcript.getNumPages()):
+            text += transcript.getPage(page).extractText()
+    except Exception as e:
+        st.write(f"Error reading PDF: {str(e)}")
+        return
 
     # split into chunks
     text_splitter = CharacterTextSplitter(
@@ -95,6 +95,9 @@ def main():
         response = chain.run(question=query, docs=docs_page_content)
         response = response.replace("\n", "")
         st.write(response)
+
+    # Delete the temporary downloaded PDF file
+    os.remove("temp_pdf.pdf")
 
 
 if __name__ == '__main__':
