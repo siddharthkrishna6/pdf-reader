@@ -22,7 +22,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # pdf - training data
-pdf = 'https://beige-gwyneth-88.tiiny.site/'
+pdf = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing'
 
 # defining the prompt
 template = """
