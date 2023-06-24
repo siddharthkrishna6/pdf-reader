@@ -14,8 +14,9 @@ from io import BytesIO
 import requests
 import streamlit as st
 import os
-from pdfminer.high_level import extract_text_to_fp
-from pdfminer.pdfparser import PDFSyntaxError
+from pdfminer.converter import TextConverter
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
 
 
 OPENAI_API_KEY = "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"
@@ -25,7 +26,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # PDF URL - training data
-pdf_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing'
+pdf_url = 'https://example.com/path/to/pdf.pdf'
 
 
 # defining the prompt
@@ -41,6 +42,19 @@ Your answers should be verbose and detailed.
 """
 
 
+def extract_text_from_pdf(pdf_bytes):
+    resource_manager = PDFResourceManager()
+    text_stream = BytesIO()
+    laparams = LAParams()
+
+    with TextConverter(resource_manager, text_stream, laparams=laparams) as device:
+        interpreter = PDFPageInterpreter(resource_manager, device)
+        for page in PDFPage.get_pages(pdf_bytes):
+            interpreter.process_page(page)
+
+    return text_stream.getvalue().decode()
+
+
 def main():
     load_dotenv()
     st.set_page_config(page_title="IBS Interpreter")
@@ -49,18 +63,10 @@ def main():
 
     # Download the PDF from the web
     response = requests.get(pdf_url)
-    with open("temp_pdf.pdf", "wb") as f:
-        f.write(response.content)
+    pdf_bytes = BytesIO(response.content)
 
     # Read the downloaded PDF
-    try:
-        with open("temp_pdf.pdf", "rb") as fp:
-            transcript = BytesIO(response.content)
-            text = extract_text_to_fp(transcript)
-
-    except PDFSyntaxError as e:
-        st.write(f"Error reading PDF: {str(e)}")
-        return
+    text = extract_text_from_pdf(pdf_bytes)
 
     # split into chunks
     text_splitter = CharacterTextSplitter(
@@ -88,4 +94,8 @@ def main():
         chain = LLMChain(llm=chat, prompt=chat_prompt)
         response = chain.run(question=query, docs=docs_page_content)
         response = response.replace("\n", "")
-        st.write
+        st.write(response)
+
+
+if __name__ == '__main__':
+    main()
