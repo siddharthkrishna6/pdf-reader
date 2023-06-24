@@ -10,10 +10,12 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-from PyPDF2 import PdfReader
+from io import BytesIO
 import requests
 import streamlit as st
 import os
+from pdfminer.high_level import extract_text_to_fp
+from pdfminer.pdfparser import PDFSyntaxError
 
 
 OPENAI_API_KEY = "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"
@@ -23,7 +25,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # PDF URL - training data
-pdf_url = 'https://drive.google.com/file/d/1SBDzMNa3mIX7zYErviOs0yashWfG8KFf/view?usp=sharing'
+pdf_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing
 
 
 # defining the prompt
@@ -52,11 +54,11 @@ def main():
 
     # Read the downloaded PDF
     try:
-        transcript = PdfReader("temp_pdf.pdf")
-        text = ""
-        for page in range(transcript.getNumPages()):
-            text += transcript.getPage(page).extractText()
-    except Exception as e:
+        with open("temp_pdf.pdf", "rb") as fp:
+            transcript = BytesIO(response.content)
+            text = extract_text_to_fp(transcript)
+
+    except PDFSyntaxError as e:
         st.write(f"Error reading PDF: {str(e)}")
         return
 
@@ -86,11 +88,4 @@ def main():
         chain = LLMChain(llm=chat, prompt=chat_prompt)
         response = chain.run(question=query, docs=docs_page_content)
         response = response.replace("\n", "")
-        st.write(response)
-
-    # Delete the temporary downloaded PDF file
-    os.remove("temp_pdf.pdf")
-
-
-if __name__ == '__main__':
-    main()
+        st.write
