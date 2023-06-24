@@ -23,7 +23,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # PDF URL - training data
-google_drive_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D'
+github_file_url = 'https://raw.githubusercontent.com/siddharthkrishna6/pdf-reader/blob/main/patient%202%20(14%20files%20merged).pdf'
 
 
 # defining the prompt
@@ -39,12 +39,8 @@ Your answers should be verbose and detailed.
 """
 
 
-def download_file_from_google_drive(url, destination):
-    file_id = url.split("/")[-2]
-    base_url = "https://drive.google.com/uc?export=download&id="
-    download_url = base_url + file_id
-
-    response = requests.get(download_url)
+def download_file_from_github(url, destination):
+    response = requests.get(url)
     with open(destination, "wb") as f:
         f.write(response.content)
 
@@ -55,8 +51,8 @@ def main():
     st.header("IBS Interpreter will provide answers from patient interviews 💬")
     query = st.text_input("Ask a question about the patients:")
 
-    # Download the PDF from Google Drive
-    download_file_from_google_drive(google_drive_url, "temp_pdf.pdf")
+    # Download the PDF from GitHub
+    download_file_from_github(github_file_url, "temp_pdf.pdf")
 
     # Read the downloaded PDF
     try:
@@ -96,9 +92,4 @@ def main():
         response = response.replace("\n", "")
         st.write(response)
 
-    # Delete the temporary downloaded PDF file
-    os.remove("temp_pdf.pdf")
-
-
-if __name__ == '__main__':
-    main()
+   
