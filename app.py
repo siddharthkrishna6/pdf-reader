@@ -10,7 +10,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-import fitz  # PyMuPDF
+from pdfminer.high_level import extract_text_to_fp
+from io import BytesIO
 import requests
 import streamlit as st
 import os
@@ -23,7 +24,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # PDF URL - training data
-pdf_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing'
+pdf_url = 'https://example.com/path/to/pdf.pdf'
 
 
 # defining the prompt
@@ -47,14 +48,13 @@ def main():
 
     # Download the PDF from the web
     response = requests.get(pdf_url)
-    with open("temp_pdf.pdf", "wb") as f:
-        f.write(response.content)
+    pdf_bytes = BytesIO(response.content)
 
-    # Read the downloaded PDF using PyMuPDF
-    doc = fitz.open("temp_pdf.pdf")
+    # Read the downloaded PDF using pdfminer.six
     text = ""
-    for page in doc:
-        text += page.get_text()
+    with BytesIO() as output:
+        extract_text_to_fp(pdf_bytes, output)
+        text = output.getvalue().decode()
 
     # split into chunks
     text_splitter = CharacterTextSplitter(
@@ -83,9 +83,6 @@ def main():
         response = chain.run(question=query, docs=docs_page_content)
         response = response.replace("\n", "")
         st.write(response)
-
-    # Delete the temporary downloaded PDF file
-    os.remove("temp_pdf.pdf")
 
 
 if __name__ == '__main__':
