@@ -22,7 +22,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # pdf - training data
-pdf = '/Users/siddharthkrishna/Downloads/patient 2 (14 files merged).pdf'
+pdf = 'https://beige-gwyneth-88.tiiny.site/'
 
 # defining the prompt
 template = """
