@@ -23,7 +23,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # PDF URL - training data
-google_drive_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing'
+google_drive_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D'
 
 
 # defining the prompt
