@@ -10,7 +10,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 import requests
 import streamlit as st
 import os
@@ -23,7 +23,7 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 # PDF URL - training data
-pdf_url = 'https://example.com/path/to/pdf.pdf'
+pdf_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing'
 
 
 # defining the prompt
@@ -52,7 +52,7 @@ def main():
 
     # Read the downloaded PDF
     try:
-        transcript = PdfFileReader("temp_pdf.pdf")
+        transcript = PdfReader("temp_pdf.pdf")
         text = ""
         for page in range(transcript.getNumPages()):
             text += transcript.getPage(page).extractText()
