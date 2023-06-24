@@ -10,7 +10,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 import requests
 import streamlit as st
 import os
@@ -60,7 +60,7 @@ def main():
 
     # Read the downloaded PDF
     try:
-        transcript = PdfFileReader("temp_pdf.pdf")
+        transcript = PdfReader("temp_pdf.pdf")
         text = ""
         for page in range(transcript.getNumPages()):
             text += transcript.getPage(page).extractText()
