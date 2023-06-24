@@ -11,6 +11,7 @@ from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
 from PyPDF2 import PdfReader
+import requests
 import streamlit as st
 import os
 
@@ -21,8 +22,9 @@ os.environ["OPENAI_API_KEY"] = "sk-taK4GWJqCmWIIfhSWmYmT3BlbkFJj0GywzAY9D3LNzG6Y
 load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
-# pdf - training data
-pdf = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing'
+# PDF URL - training data
+pdf_url = 'https://drive.google.com/file/d/14nV4q0T0cUN-iMjQ-2nLobg2qoc35h5D/view?usp=sharing'
+
 
 # defining the prompt
 template = """
@@ -42,7 +44,14 @@ def main():
     st.set_page_config(page_title="IBS Interpreter")
     st.header("IBS Interpreter will provide answers from patient interviews 💬")
     query = st.text_input("Ask a question about the patients:")
-    transcript = PdfReader(pdf)
+
+    # Download the PDF from the web
+    response = requests.get(pdf_url)
+    with open("temp_pdf.pdf", "wb") as f:
+        f.write(response.content)
+
+    # Read the downloaded PDF
+    transcript = PdfReader("temp_pdf.pdf")
     text = ""
     for page in transcript.pages:
         text += page.extract_text()
@@ -74,6 +83,9 @@ def main():
         response = chain.run(question=query, docs=docs_page_content)
         response = response.replace("\n", "")
         st.write(response)
+
+    # Delete the temporary downloaded PDF file
+    os.remove("temp_pdf.pdf")
 
 
 if __name__ == '__main__':
