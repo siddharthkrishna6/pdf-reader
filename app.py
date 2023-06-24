@@ -10,9 +10,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-import pdfminer
-from pdfminer.high_level import extract_text_to_fp
-from io import BytesIO
+from PyPDF2 import PdfFileReader
 import requests
 import streamlit as st
 import os
@@ -49,13 +47,18 @@ def main():
 
     # Download the PDF from the web
     response = requests.get(pdf_url)
-    pdf_bytes = BytesIO(response.content)
+    with open("temp_pdf.pdf", "wb") as f:
+        f.write(response.content)
 
-    # Read the downloaded PDF using pdfminer.six
-    text = ""
-    with BytesIO() as output:
-        extract_text_to_fp(pdf_bytes, output)
-        text = output.getvalue().decode()
+    # Read the downloaded PDF
+    try:
+        transcript = PdfFileReader("temp_pdf.pdf")
+        text = ""
+        for page in range(transcript.getNumPages()):
+            text += transcript.getPage(page).extractText()
+    except Exception as e:
+        st.write(f"Error reading PDF: {str(e)}")
+        return
 
     # split into chunks
     text_splitter = CharacterTextSplitter(
@@ -84,6 +87,9 @@ def main():
         response = chain.run(question=query, docs=docs_page_content)
         response = response.replace("\n", "")
         st.write(response)
+
+    # Delete the temporary downloaded PDF file
+    os.remove("temp_pdf.pdf")
 
 
 if __name__ == '__main__':
