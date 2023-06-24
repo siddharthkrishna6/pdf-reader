@@ -10,6 +10,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
+import pdfminer
 from pdfminer.high_level import extract_text_to_fp
 from io import BytesIO
 import requests
