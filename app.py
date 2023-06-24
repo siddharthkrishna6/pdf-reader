@@ -1,7 +1,3 @@
-import PyPDF2 
-import PdfReader
-import streamlit as st
-import os
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
@@ -13,6 +9,10 @@ from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
+
+from PyPDF2 import PdfReader
+import streamlit as st
+import os
 
 
 OPENAI_API_KEY = "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"
