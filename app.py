@@ -12,6 +12,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 
 from PyPDF2 import PdfReader
 import requests
+import io
 import streamlit as st
 import os
 
@@ -22,8 +23,8 @@ os.environ["OPENAI_API_KEY"] = "sk-taK4GWJqCmWIIfhSWmYmT3BlbkFJj0GywzAY9D3LNzG6Y
 load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
-# PDF URL - training data
-github_file_url = 'https://raw.githubusercontent.com/siddharthkrishna6/pdf-reader/main/patient%202%20(14%20files%20merged).pdf'
+# GitHub Pages PDF URL - replace with your own URL
+github_pages_pdf_url = 'https://siddharthkrishna6.github.io/pdf-reader/patient%202%20(14%20files%20merged).pdf'
 
 
 # defining the prompt
@@ -39,10 +40,9 @@ Your answers should be verbose and detailed.
 """
 
 
-def download_file_from_github(url, destination):
+def download_pdf_from_github_pages(url):
     response = requests.get(url)
-    with open(destination, "wb") as f:
-        f.write(response.content)
+    return io.BytesIO(response.content)
 
 
 def main():
@@ -51,12 +51,12 @@ def main():
     st.header("IBS Interpreter will provide answers from patient interviews 💬")
     query = st.text_input("Ask a question about the patients:")
 
-    # Download the PDF from GitHub
-    download_file_from_github(github_file_url, "temp_pdf.pdf")
+    # Download the PDF from GitHub Pages
+    pdf_content = download_pdf_from_github_pages(github_pages_pdf_url)
 
     # Read the downloaded PDF
     try:
-        transcript = PdfReader("temp_pdf.pdf")
+        transcript = PdfReader(pdf_content)
         text = ""
         for page in range(transcript.getNumPages()):
             text += transcript.getPage(page).extractText()
@@ -91,5 +91,3 @@ def main():
         response = chain.run(question=query, docs=docs_page_content)
         response = response.replace("\n", "")
         st.write(response)
-
-   
