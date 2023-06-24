@@ -10,7 +10,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 
-from PyPDF2 import PdfReader
+import fitz  # PyMuPDF
 import requests
 import streamlit as st
 import os
@@ -50,11 +50,11 @@ def main():
     with open("temp_pdf.pdf", "wb") as f:
         f.write(response.content)
 
-    # Read the downloaded PDF
-    transcript = PdfReader("temp_pdf.pdf")
+    # Read the downloaded PDF using PyMuPDF
+    doc = fitz.open("temp_pdf.pdf")
     text = ""
-    for page in transcript.pages:
-        text += page.extract_text()
+    for page in doc:
+        text += page.get_text()
 
     # split into chunks
     text_splitter = CharacterTextSplitter(
